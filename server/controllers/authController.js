@@ -32,8 +32,9 @@ export const register = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      // secure: process.env.NODE_ENV === "production",
+      secure: true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -84,8 +85,10 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      // secure: process.env.NODE_ENV === "production",
+      secure: true,
+
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -102,8 +105,9 @@ export const logout = async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      // secure: process.env.NODE_ENV === "production",
+      secure: true,
+      sameSite: "none",
     });
 
     return res.json({ success: true, message: "Logged Out" });
@@ -202,14 +206,15 @@ export const verifyEmail = async (req, res) => {
 
 export const isAuthenticated = async (req, res) => {
   try {
-    return res.json({
-      success: true,
-    });
-  } catch (error) {
-    res.json({
-      success: false,
-      message: error.message,
-    });
+    const token = req.cookies.token;
+    if (!token) {
+      return res.json({ success: false });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({ success: true });
+  } catch {
+    return res.json({ success: false });
   }
 };
 
@@ -219,13 +224,13 @@ export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.json({ sucess: false, message: "Email is required" });
+    return res.json({ success: false, message: "Email is required" });
   }
 
   try {
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.json({ sucess: false, message: "User not found" });
+      return res.json({ success: false, message: "User not found" });
     }
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
@@ -251,7 +256,7 @@ export const sendResetOtp = async (req, res) => {
 
     return res.json({ success: true, message: `OTP sent to your email` });
   } catch (error) {
-    return res.json({ sucess: false, message: error.message });
+    return res.json({ success: false, message: error.message });
   }
 };
 
